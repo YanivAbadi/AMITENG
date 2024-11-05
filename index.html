@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>משחק לימוד אנגלית</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            padding: 10px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .score {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .word {
+            text-align: center;
+            font-size: 1.8rem;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .speaker {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 30px;
+            height: 30px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background: #2196F3;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .correct {
+            background: #4CAF50 !important;
+        }
+
+        .incorrect {
+            background: #f44336 !important;
+        }
+
+        .progress {
+            height: 10px;
+            background: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .word {
+                font-size: 1.5rem;
+                padding: 15px;
+            }
+            
+            .option {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="score">
+            ניקוד: <span id="score">0</span> מתוך <span id="total">0</span>
+        </div>
+        <div class="progress">
+            <div class="progress-bar" id="progress"></div>
+        </div>
+        <div class="word">
+            <span id="current-word"></span>
+            <svg class="speaker" viewBox="0 0 24 24" onclick="speakWord()">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+            </svg>
+        </div>
+        <div class="options" id="options"></div>
+    </div>
+
+    <script>
+        const words = [
+            {english: "ancient", hebrew: "עתיק"},
+            {english: "article", hebrew: "מאמר"},
+            {english: "as if", hebrew: "כאילו ש-"},
+            {english: "attach", hebrew: "לחבר, לצרף"},
+            {english: "attempt", hebrew: "לנסות"},
+            {english: "based on", hebrew: "מבוסס על"},
+            {english: "borrow", hebrew: "לקחת בהשאלה"},
+            {english: "bring luck", hebrew: "להביא למישהו מזל"},
+            {english: "care", hebrew: "להיות איכפת"},
+            {english: "colleague", hebrew: "קולגה, עמית"},
+            {english: "consider", hebrew: "להחשיב את ... כ-"},
+            {english: "contrast", hebrew: "הבדל, למצוא את ההבדל"},
+            {english: "cut", hebrew: "חתך/שריטה, לחתוך"},
+            {english: "defend", hebrew: "להגן"},
+            {english: "deny", hebrew: "להכחיש"},
+            {english: "dive", hebrew: "לצלול"},
+            {english: "duty", hebrew: "תפקיד, חובה"},
+            {english: "elementary", hebrew: "יסודי, בסיסי"},
+            {english: "elevator", hebrew: "מעלית"},
+            {english: "every single", hebrew: "כל אחד ואחד"},
+            {english: "excitement", hebrew: "התרגשות"},
+            {english: "favor", hebrew: "טובה"},
+            {english: "find it funny", hebrew: "לחשוב שזה מצחיק"},
+            {english: "fire", hebrew: "אש/שריפה, לירות"},
+            {english: "for instance", hebrew: "לדוגמה"},
+            {english: "forgive", hebrew: "לסלוח"},
+            {english: "gather", hebrew: "לאסוף"},
+            {english: "give a call", hebrew: "להתקשר למישהו"},
+            {english: "happiness", hebrew: "שמחה"},
+            {english: "hardly", hebrew: "בקושי"},
+            {english: "hit", hebrew: "להיט"},
+            {english: "importance", hebrew: "חשיבות"},
+            {english: "jar", hebrew: "צנצנת"},
+            {english: "joke", hebrew: "בדיחה"},
+            {english: "laugh at", hebrew: "לצחוק על"},
+            {english: "mean", hebrew: "זדוני, מרושע"},
+            {english: "midday", hebrew: "צהריים"},
+            {english: "mind", hebrew: "מוח, לשים לב"},
+            {english: "nowadays", hebrew: "בימינו"},
+            {english: "play a trick on", hebrew: "לעשות תעלול ל-"},
+            {english: "pop", hebrew: "פופ"},
+            {english: "record", hebrew: "שיא, להקליט"},
+            {english: "result in", hebrew: "שיגמר ב-"},
+            {english: "roll", hebrew: "לחמנייה, להתגלגל"},
+            {english: "see", hebrew: "להבין"},
+            {english: "selfie", hebrew: "סלפי"},
+            {english: "sense of humor", hebrew: "חוש הומור"},
+            {english: "smell", hebrew: "ריח, להריח"},
+            {english: "smoke", hebrew: "עשן, לעשן"},
+            {english: "so that", hebrew: "כך ש..."},
+            {english: "stranger", hebrew: "זר"},
+            {english: "study", hebrew: "חדר עבודה,ללמוד"},
+            {english: "the public", hebrew: "הציבור"},
+            {english: "the same thing", hebrew: "אותו הדבר"},
+            {english: "tweet", hebrew: "ציוץ, לצייץ"},
+            {english: "adjective", hebrew: "שם תואר"},
+            {english: "adverb", hebrew: "תואר הפועל"},
+            {english: "arrange", hebrew: "לארגן"},
+            {english: "at all", hebrew: "בכלל"},
+            {english: "attitude", hebrew: "גישה"},
+            {english: "be expecting", hebrew: "לצפות"},
+            {english: "board", hebrew: "לעלות על כלי"},
+            {english: "certain", hebrew: "מסוים"},
+            {english: "complex", hebrew: "מורכב, מסובך"},
+            {english: "crucial", hebrew: "הכרחי"},
+            {english: "culture", hebrew: "תרבות"},
+            {english: "dictation", hebrew: "הכתבה"},
+            {english: "eventually", hebrew: "בסופו של דבר"},
+            {english: "excuse", hebrew: "תירוץ"},
+            {english: "experience", hebrew: "ניסיון, חוויה"},
+            {english: "gas", hebrew: "דלק"},
+            {english: "in other words", hebrew: "במילים אחרות"},
+            {english: "just", hebrew: "פשוט, רק"},
+            {english: "knock", hebrew: "לדפוק"},
+            {english: "later", hebrew: "אחר כך"},
+            {english: "lay the table", hebrew: "לערוך שולחן"},
+            {english: "noticeboard", hebrew: "לוח מודעות"},
+            {english: "noun", hebrew: "שם עצם"},
+            {english: "paragraph", hebrew: "פסקה"},
+            {english: "pass through", hebrew: "לחלוף דרך"},
+            {english: "period", hebrew: "נקודה"},
+            {english: "phrase", hebrew: "ביטוי"},
+            {english: "plural", hebrew: "צורת רבים"},
+            {english: "question mark", hebrew: "סימן שאלה"},
+            {english: "rather", hebrew: "די, במידה מה"},
+            {english: "relatively", hebrew: "די, יחסית"},
+            {english: "route", hebrew: "מסלול, נתיב"},
+            {english: "singular", hebrew: "צורת יחיד"},
+            {english: "tense", hebrew: "זמן"},
+            {english: "the press", hebrew: "העיתונות"},
+            {english: "to be honest", hebrew: "למען האמת"},
+            {english: "tone", hebrew: "טון"},
+            {english: "understanding", hebrew: "הבנה"}
+        ];
+
+        let shuffledWords = [];
+        let currentIndex = 0;
+        let score = 0;
+
+        function shuffle(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function speakWord() {
+            const word = shuffledWords[currentIndex].english;
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            speechSynthesis.cancel();
+            speechSynthesis.speak(utterance);
+        }
+
+        function checkAnswer(selected, correct, button) {
+            const buttons = document.querySelectorAll('.option');
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (selected === correct) {
+                button.classList.add('correct');
+                score++;
+                document.getElementById('score').textContent = score;
+                setTimeout(nextWord, 1000);
+            } else {
+                button.classList.add('incorrect');
+                buttons.forEach(btn => {
+                    if (btn.textContent === correct) {
+                        btn.classList.add('correct');
+                    }
+                });
+                setTimeout(nextWord, 2000);
+            }
+        }
+
+        function updateProgress() {
+            const progress = (currentIndex / shuffledWords.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function nextWord() {
+            if (currentIndex >= shuffledWords.length) {
+                const percentage = Math.round((score / shuffledWords.length) * 100);
+                alert(`המשחק הסתיים!\nהניקוד שלך: ${score} מתוך ${shuffledWords.length}\nאחוז הצלחה: ${percentage}%`);
+                return;
+            }
+
+            const currentWord = shuffledWords[currentIndex];
+            document.getElementById('current-word').textContent = currentWord.english;
+            document.getElementById('total').textContent = shuffledWords.length;
+            
+            const options = shuffle(words)
+                .filter(word => word.hebrew !== currentWord.hebrew)
+                .slice(0, 4)
+                .concat(currentWord)
+                .sort(() => Math.random() - 0.5);
+
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option';
+                button.textContent = option.hebrew;
+                button.onclick = () => checkAnswer(option.hebrew, currentWord.hebrew, button);
+                optionsContainer.appendChild(button);
+            });
+
+            updateProgress();
+            speakWord();
+            currentIndex++;
+        }
+
+        // התחלת המשחק
+        shuffledWords = shuffle(words);
+        nextWord();
+    </script>
+</body>
+</html>
